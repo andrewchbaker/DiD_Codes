@@ -50,7 +50,7 @@ mod2 <- feols(log_gini ~ treat + gsp_pc_growth + prop_blacks + prop_dropouts + p
                unemploymentrate | statefip + wrkyr, cluster = "statefip", data = data)
 
 # make table
-table3 <- bind_rows(
+BLL_table <- bind_rows(
   bind_cols(
     # get the standard error and estimates into a table for mod1
     broom::tidy(mod1, se = "cluster") %>%
@@ -95,13 +95,13 @@ table3 <- bind_rows(
   kable("latex", escape = F, align = 'lc',
         booktabs = T,
         col.names = c(" ", "Log Gini", "Log Gini"),
-        label = "table3", 
+        label = "BLL_table", 
         caption = "The Impact of Deregulation on Income Inequality") %>% 
   kable_styling(position = "center", latex_options = c("HOLD_position")) %>% 
   add_header_above(c(" " = 1, "No \n Controls" = 1, "With \n Controls" = 1))
 
 # save
-write_lines(table3, file = paste(dropbox, "table3.tex", sep = ""))
+write_lines(BLL_table, file = paste(dropbox, "BLL_table.tex", sep = ""))
 
 # Table 4 - Bacon Decomposition -----------------------------------------------------
 # calculate the bacon decomposition without covariates
@@ -122,20 +122,20 @@ group_avg <- bacon_out %>%
             weights = sum(weight))
 
 # make the table
-table4 <- group_avg %>% 
+BLL_decomp <- group_avg %>% 
   kable("latex", digits = 3, align = 'lcc',
         booktabs = T,
         col.names = c("Type", "Weighted \n Average", "Total \n Weight"),
-        label = "table4") %>% 
+        label = "BLL_decomp") %>% 
   kable_styling(position = "center", font_size = 8,
                 latex_options = c("HOLD_position", "scale_down"))
 
 # save
-write_lines(table4, path = paste(dropbox, "table4.tex", sep = ""))
+write_lines(BLL_decomp, path = paste(dropbox, "BLL_decomp.tex", sep = ""))
 
 # Figure 5 - Bacon Decomp -------------------------------------------------
 # first early v late plot
-p1 <- bacon_out %>% 
+EvL <- bacon_out %>% 
   filter(type == "Earlier vs Later Treated") %>% 
   ggplot(aes(x = weight, y = estimate)) + 
   geom_point(size = 3, alpha = 1/2) + 
@@ -150,7 +150,7 @@ p1 <- bacon_out %>%
         axis.title.y = element_text(angle = 360, hjust = 0.5, vjust = 0.5))
 
 # late v early plot
-p2 <- bacon_out %>% 
+LvE <- bacon_out %>% 
   filter(type == "Later vs Earlier Treated") %>% 
   ggplot(aes(x = weight, y = estimate)) + 
   geom_point(size = 3, alpha = 1/2) + 
@@ -165,14 +165,14 @@ p2 <- bacon_out %>%
         axis.title.y = element_text(angle = 360, hjust = 0.5, vjust = 0.5))
 
 # combine the figures
-fig5 <- p1 / p2 
+BLL_decomp_plot <- EvL / LvE
 
 # save
-ggsave(fig5, filename = paste(dropbox, "fig5.png", sep = ""), dpi = 500,
+ggsave(BLL_decomp_plot, filename = paste(dropbox, "BLL_decomp_plot.png", sep = ""), dpi = 500,
        width = 5, height = 20/3)
 
 # Figure 7 - timing of adoption -------------------------------------------
-fig7 <- data %>% 
+BLL_timing <- data %>% 
   select(state, wrkyr, branch_reform) %>% 
   mutate(state = fct_reorder(state, rank(desc(state)))) %>% 
   mutate(post = if_else(wrkyr < branch_reform, "Pre", "Post")) %>% 
@@ -187,7 +187,7 @@ fig7 <- data %>%
         legend.background = element_rect(color = "white")) 
 
 # save
-ggsave(fig7, filename = paste(dropbox, "fig7.png", sep = ""), dpi = 500,
+ggsave(BLL_timing, filename = paste(dropbox, "BLL_timing.png", sep = ""), dpi = 500,
        width = 5, height = 20/3)
 
 # Figure 8 - Fixed Event Studies ------------------------------------------
@@ -206,10 +206,10 @@ form <- as.formula(paste0("log_gini ~", paste0(covs, collapse = " + "),
                           "| wrkyr + statefip"))
 
 # estimate model as published
-mod8_1 <- feols(form, cluster = "statefip", data = data_dummies)
+es_published <- feols(form, cluster = "statefip", data = data_dummies)
 
 # plot
-fig8a <- broom::tidy(mod8_1, conf.int = TRUE, se = 'cluster') %>%
+ES_1 <- broom::tidy(es_published, conf.int = TRUE, se = 'cluster') %>%
   # add in the relative time variable
   mutate(t = c(-10:-1, 1:15)) %>% 
   # substract out the the mean for beta -10 to -1
@@ -239,7 +239,7 @@ fig8a <- broom::tidy(mod8_1, conf.int = TRUE, se = 'cluster') %>%
         plot.title = element_text(hjust = 0.5))
 
 # panel B - don't detrend
-fig8b <- broom::tidy(mod8_1, conf.int = TRUE, se = 'cluster') %>%
+ES_2 <- broom::tidy(es_published, conf.int = TRUE, se = 'cluster') %>%
   # add in the relative time variable
   mutate(t = c(-10:-1, 1:15)) %>% 
   select(t, estimate, conf.low, conf.high) %>% 
@@ -282,10 +282,10 @@ form <- as.formula(paste0("log_gini ~", paste0(covs, collapse = " + "),
 
 # estimate the model and plot
 # estimate the model
-mod8_2 <- feols(form, cluster = "statefip", data = data_dummies)
+ES_fix1 <- feols(form, cluster = "statefip", data = data_dummies)
 
 # plot
-fig8c <- broom::tidy(mod8_2, conf.int = TRUE, se = "cluster") %>%
+ES_3 <- broom::tidy(ES_fix1, conf.int = TRUE, se = "cluster") %>%
   # add in the relative time variable
   mutate(t = yrs) %>% 
   filter(t %>% between(-10, 15)) %>% 
@@ -334,10 +334,10 @@ form <- as.formula(paste0("log_gini ~", paste0(covs, collapse = " + "),
                           "| wrkyr + statefip"))
 
 # run model
-mod8_3 <- feols(form, cluster = "statefip", data = data_dummies)
+ES_fix2 <- feols(form, cluster = "statefip", data = data_dummies)
 
 # plot
-fig8d <- broom::tidy(mod8_3, conf.int = TRUE, se = "cluster") %>%
+ES_4 <- broom::tidy(ES_fix2, conf.int = TRUE, se = "cluster") %>%
   # add in the relative time variable
   mutate(t = yrs) %>% 
   filter(t %>% between(-10, 15)) %>% 
@@ -364,10 +364,10 @@ fig8d <- broom::tidy(mod8_3, conf.int = TRUE, se = "cluster") %>%
         plot.title = element_text(hjust = 0.5))
 
 # combine plots
-fig8 <- (fig8a + fig8b)/(fig8c + fig8d)
+BLL_ES <- (ES_1 + ES_2)/(ES_3 + ES_4)
 
 #save
-ggsave(fig8, filename = paste(dropbox, "fig8.png", sep = ""), dpi = 500,
+ggsave(BLL_ES, filename = paste(dropbox, "BLL_ES.png", sep = ""), dpi = 500,
        width = 10, height = 20/3)
 
 # Remedies ----------------------------------------------------------------
@@ -440,7 +440,7 @@ text_pre <- bquote(widehat(delta^'Pre') ==.(pre_att)~"; "~p^'Pre'==.(pre_p))
 text_post <- bquote(widehat(delta^'Post') ==.(post_att)~"; "~p^'Post'==.(post_p))
 
 # plot
-fig9a <- broom::tidy(stack1, conf.int = TRUE, se = "cluster") %>%
+BLL_stack1 <- broom::tidy(stack1, conf.int = TRUE, se = "cluster") %>%
   # add in the relative time variable
   mutate(t = c(-5:-1, 1:10)) %>% 
   select(t, estimate, conf.low, conf.high) %>% 
@@ -536,7 +536,7 @@ text_post <- bquote(widehat(delta^'Post') ==.(post_att)~"; "~p^'Post'==.(post_p)
 
 # estimate the model and plot
 # estimate the model
-fig9b <- broom::tidy(stack2, conf.int = TRUE, se = "cluster") %>%
+BLL_stack2 <- broom::tidy(stack2, conf.int = TRUE, se = "cluster") %>%
   # add in the relative time variable
   mutate(t = c(-5:-1, 1:10)) %>% 
   select(t, estimate, conf.low, conf.high) %>% 
@@ -565,10 +565,10 @@ fig9b <- broom::tidy(stack2, conf.int = TRUE, se = "cluster") %>%
         plot.title = element_text(hjust = 0.5))
 
 # combine and save
-fig9 <- fig9a + fig9b 
+BLL_stack <- BLL_stack1 + BLL_stack2 
 
 #save
-ggsave(fig9, filename = paste(dropbox, "fig9.png", sep = ""), dpi = 500,
+ggsave(BLL_stack, filename = paste(dropbox, "BLL_stack.png", sep = ""), dpi = 500,
        width = 10, height = 20/6)
 
 # CS Method ---------------------------------------------------------------
@@ -618,7 +618,7 @@ text_pre <- bquote(widehat(delta^'Pre') ==.(pre_att)~"; "~p^'Pre'==.(pre_p))
 text_post <- bquote(widehat(delta^'Post') ==.(post_att)~"; "~p^'Post'==.(post_p))
 
 # plot
-fig10a <- tibble(
+BLL_CS1 <- tibble(
   t = es1$egt,
   estimate = es1$att.egt,
   se = es1$se.egt,
@@ -689,7 +689,7 @@ text_pre <- bquote(widehat(delta^'Pre') ==.(pre_att)~"; "~p^'Pre'==.(pre_p))
 text_post <- bquote(widehat(delta^'Post') ==.(post_att)~"; "~p^'Post'==.(post_p))
 
 # plot
-fig10b <- tibble(
+BLL_CS2 <- tibble(
   t = es2$egt,
   estimate = es2$att.egt,
   se = es2$se.egt,
@@ -720,8 +720,8 @@ fig10b <- tibble(
         plot.title = element_text(hjust = 0.5))
 
 # combine and save
-fig10 <- fig10a + fig10b 
+BLL_CS <- BLL_CS1 + BLL_CS2
 
 #save
-ggsave(fig10, filename = paste(dropbox, "fig10.png", sep = ""), dpi = 500,
+ggsave(BLL_CS, filename = paste(dropbox, "BLL_CS.png", sep = ""), dpi = 500,
        width = 10, height = 20/6)

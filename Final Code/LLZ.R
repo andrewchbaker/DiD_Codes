@@ -18,7 +18,7 @@ theme_set(theme_clean() + theme(plot.background = element_blank()))
 dropbox <- "/Users/Andrew/Dropbox/Apps/Overleaf/bakerlarckerwang/Write_Up/"
 
 # Connect to WRDS Server --------------------------------------------------
-# you will have to add your own username and password here
+# need to type in your password here
 wrds <- dbConnect(Postgres(),
                   host = 'wrds-pgdata.wharton.upenn.edu',
                   port = 9737,
@@ -82,7 +82,7 @@ get_info <- function(mod, modelname) {
 
 # make table
 # bind info needed from models
-table7 <- bind_rows(
+LLZ_table <- bind_rows(
   get_info(mod1, "mod1"),
   get_info(mod2, "mod2"),
   get_info(mod3, "mod3"),
@@ -115,12 +115,12 @@ table7 <- bind_rows(
   # make and report table
   kable("latex", align = 'lcccc', booktabs = T,
         col.names = c(" ", "(1)", "(2)", "(3)", "(4)"),
-        label = "table7", linesep = "",
+        label = "LLZ_table", linesep = "",
         caption = "IDD and Nondisclosure of Customer Information") %>% 
   kable_styling(position = "center", latex_options = c("HOLD_position"))
 
 # save
-write_lines(table7, path = paste(dropbox, "table7.tex", sep = ""))
+write_lines(LLZ_table, path = paste(dropbox, "LLZ_table.tex", sep = ""))
 
 # Event Study Did ---------------------------------------------------------
 # first make treatment timing plot
@@ -181,7 +181,7 @@ data_tab2 <- data_tab2 %>%
   mutate(rel_year = year - adopt_year) 
 
 # make relative timing plot
-fig16a <- data_tab2 %>% 
+LLZ_timing <- data_tab2 %>% 
   # get post indicator and number by state year
   group_by(ba_state, year) %>% 
   summarize(post = mean(post),
@@ -229,7 +229,7 @@ form <- as.formula(paste0("lnhide_ratio ~", paste0(covariates, collapse = " + ")
 mod <- feols(form, cluster = "ba_state", data = es_data)
 
 # first es plot - 3 levels of fixed effects
-fig16b <- broom::tidy(mod, conf.int = TRUE, se = "cluster") %>% 
+LLZ_ES1 <- broom::tidy(mod, conf.int = TRUE, se = "cluster") %>% 
   # add in the relative time variable
   mutate(t = yrs) %>% 
   filter(t %>% between(-5, 5)) %>% 
@@ -262,7 +262,7 @@ form <- as.formula(paste0("lnhide_ratio ~", paste0(covariates, collapse = " + ")
 mod <- feols(form, cluster = "ba_state", data = es_data)
 
 # plot
-fig16c <- broom::tidy(mod, conf.int = TRUE, se = "cluster") %>% 
+LLZ_ES2 <- broom::tidy(mod, conf.int = TRUE, se = "cluster") %>% 
   # add in the relative time variable
   mutate(t = yrs) %>% 
   filter(t %>% between(-5, 5)) %>% 
@@ -290,10 +290,10 @@ fig16c <- broom::tidy(mod, conf.int = TRUE, se = "cluster") %>%
         plot.title = element_text(hjust = 0.5))
 
 # combine
-fig16 <- fig16a + (fig16b / fig16c)
+LLZ_TIMING_ES <- LLZ_timing + (LLZ_ES1 / LLZ_ES2)
 
 # save
-ggsave(fig16, filename = paste(dropbox, "fig16.png", sep = ""), dpi = 800,
+ggsave(LLZ_TIMING_ES, filename = paste(dropbox, "LLZ_TIMING_ES.png", sep = ""), dpi = 800,
        width = 10, height = 8)
 
 # Remedies ----------------------------------------------------------------
@@ -362,7 +362,7 @@ text_pre <- bquote(widehat(delta^'Pre') ==.(pre_att)~"; "~p^'Pre'==.(pre_p))
 text_post <- bquote(widehat(delta^'Post') ==.(post_att)~"; "~p^'Post'==.(post_p))
 
 # estimate model and make plot
-fig17a <- broom::tidy(mod, conf.int = TRUE, se = "cluster") %>% 
+LLZ_stack1 <- broom::tidy(mod, conf.int = TRUE, se = "cluster") %>% 
   # add in the relative time variable
   mutate(t = c(-5:-2, 0:5)) %>% 
   select(t, estimate, conf.low, conf.high) %>% 
@@ -445,7 +445,7 @@ text_pre <- bquote(widehat(delta^'Pre') ==.(pre_att)~"; "~p^'Pre'==.(pre_p))
 text_post <- bquote(widehat(delta^'Post') ==.(post_att)~"; "~p^'Post'==.(post_p))
 
 # estimate model and make plot
-fig17b <- broom::tidy(mod, conf.int = TRUE, se = "cluster") %>% 
+LLZ_stack2 <- broom::tidy(mod, conf.int = TRUE, se = "cluster") %>% 
   # add in the relative time variable
   mutate(t = c(-5:-2, 0:5)) %>% 
   select(t, estimate, conf.low, conf.high) %>% 
@@ -498,7 +498,7 @@ text_pre <- bquote(widehat(delta^'Pre') ==.(pre_att)~"; "~p^'Pre'==.(pre_p))
 text_post <- bquote(widehat(delta^'Post') ==.(post_att)~"; "~p^'Post'==.(post_p))
 
 # estimate model and make plot
-fig17c <- broom::tidy(mod, conf.int = TRUE, se = "cluster") %>% 
+LLZ_stack3 <- broom::tidy(mod, conf.int = TRUE, se = "cluster") %>% 
   # add in the relative time variable
   mutate(t = c(-5:-2, 0:5)) %>% 
   select(t, estimate, conf.low, conf.high) %>% 
@@ -552,7 +552,7 @@ text_pre <- bquote(widehat(delta^'Pre') ==.(pre_att)~"; "~p^'Pre'==.(pre_p))
 text_post <- bquote(widehat(delta^'Post') ==.(post_att)~"; "~p^'Post'==.(post_p))
 
 # estimate model and make plot
-fig17d <- broom::tidy(mod, conf.int = TRUE, se = "cluster") %>% 
+LLZ_stack4 <- broom::tidy(mod, conf.int = TRUE, se = "cluster") %>% 
   # add in the relative time variable
   mutate(t = c(-5:-2, 0:5)) %>% 
   select(t, estimate, conf.low, conf.high) %>% 
@@ -583,8 +583,8 @@ fig17d <- broom::tidy(mod, conf.int = TRUE, se = "cluster") %>%
         plot.title = element_text(hjust = 0.5))
 
 # combine plots
-fig17 <- fig17a + fig17b + fig17c + fig17d + plot_layout(nrow = 2)
+LLZ_STACK <- LLZ_stack1 + LLZ_stack2 + LLZ_stack3 + LLZ_stack4 + plot_layout(nrow = 2)
 
 # save
-ggsave(fig17, filename = paste(dropbox, "fig17.png", sep = ""), dpi = 800,
+ggsave(LLZ_STACK, filename = paste(dropbox, "LLZ_STACK.png", sep = ""), dpi = 800,
        width = 10, height = 8)

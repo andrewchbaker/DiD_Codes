@@ -574,34 +574,34 @@ plot12 <- simdata6 %>%
         plot.subtitle = element_text(hjust = 0.5))
 
 # plot treatment paths - three good ones
-fig1a <- plot1 + plot2 + plot3
+Sims_1_3_trends <- plot1 + plot2 + plot3
 
 #save
-ggsave(fig1a, filename = paste(dropbox, "fig1a.png", sep = ""), dpi = 500,
+ggsave(Sims_1_3_trends, filename = paste(dropbox, "Sims_1_3_trends.png", sep = ""), dpi = 500,
        width = 10, height = 4)
 
 # plot estimates of TWFE DD
-fig2a <- plot7 + plot8 + plot9
+Sims_1_3_dist <- plot7 + plot8 + plot9
 
 # save
-ggsave(fig2a, filename = paste(dropbox, "fig2a.png", sep = ""), dpi = 500,
+ggsave(Sims_1_3_dist, filename = paste(dropbox, "Sims_1_3_dist.png", sep = ""), dpi = 500,
        width = 10, height = 4)
 
 # plot treatment paths - three bad ones
-fig1b <- plot4 + plot5 + plot6
+Sims_4_6_trends <- plot4 + plot5 + plot6
 
 # save
-ggsave(fig1b, filename = paste(dropbox, "fig1b.png", sep = ""), dpi = 500,
+ggsave(Sims_4_6_trends, filename = paste(dropbox, "Sims_4_6_trends.png", sep = ""), dpi = 500,
        width = 10, height = 4)
 
 # plot estimates of TWFE DD
-fig2b <- plot10 + plot11 + plot12
+Sims_4_6_dist <- plot10 + plot11 + plot12
 
 # save
-ggsave(fig2b, filename = paste(dropbox, "fig2b.png", sep = ""), dpi = 500,
+ggsave(Sims_4_6_dist, filename = paste(dropbox, "Sims_4_6_dist.png", sep = ""), dpi = 500,
        width = 10, height = 4)
 
-# Figure 2 - GB Decomposition -------------------------------------------------------------
+# Figure - GB Decomposition -------------------------------------------------------------
 # calculate the bacon decomposition without covariates
 bacon_out_4 <- bacon(dep_var ~ treat,
                    data = data4,
@@ -706,7 +706,7 @@ shapes <- c("Earlier vs. Later Treated - DiD Estimate" = 21,
             "Later vs. Earlier Treated - True Value" = 24)
 
 # sim4 plot
-fig3a <- bacon_out_4 %>% 
+sim4 <- bacon_out_4 %>% 
   arrange(desc(weight)) %>% 
   ggplot(aes(x = weight_vl, y = estimate_vl, shape = identifier, color = identifier, fill = identifier)) +
   geom_point(size = 2) + 
@@ -732,7 +732,7 @@ fig3a <- bacon_out_4 %>%
   guides(color = guide_legend(nrow = 2))
 
 # sim 5 plot
-fig3b <- bacon_out_5 %>% 
+sim5 <- bacon_out_5 %>% 
   arrange(desc(weight)) %>% 
   ggplot(aes(x = weight_vl, y = estimate_vl, shape = identifier, color = identifier, fill = identifier)) +
   geom_point(position = position_jitter(width = 0, height = 0.3, seed = 3), size = 2) + 
@@ -759,7 +759,7 @@ fig3b <- bacon_out_5 %>%
   guides(color = guide_legend(nrow = 2))
 
 # sim 6  plot
-fig3c <- bacon_out_6 %>% 
+sim6 <- bacon_out_6 %>% 
   arrange(desc(weight)) %>% 
   ggplot(aes(x = weight_vl, y = estimate_vl, shape = identifier, color = identifier, fill = identifier)) +
   geom_point(size = 2) + 
@@ -792,7 +792,7 @@ fig3c <- bacon_out_6 %>%
 colors2 <- c("Treated" = "#A7473A", "Control" = "#4B5F6C")
 
 # make subplot
-fig3d <- data6 %>% 
+subplot <- data6 %>% 
   filter((group == 2007 | group == 1989) & year >= 1989) %>% 
   mutate(group = if_else(group == 2007, "Treated", "Control")) %>% 
   ggplot(aes(x = year, y = dep_var, group = unit)) +
@@ -819,8 +819,8 @@ fig3d <- data6 %>%
         axis.title.y = element_text(hjust = 0.5, vjust = 0.5, angle = 360))
 
 # combine and save  
-fig3 <- (fig3a + fig3b + fig3c) / (fig3d) 
-ggsave(fig3, filename = paste(dropbox, "fig3.png", sep = ""), dpi = 500,
+GB_decomp_sims <- (sim4 + sim5 + sim6) / (subplot) 
+ggsave(GB_decomp_sims, filename = paste(dropbox, "GB_decomp_sims.png", sep = ""), dpi = 500,
        width = 10, height = 8)
 
 # Callaway Sant'Anna -------------------------------------------------------------
@@ -897,7 +897,7 @@ CS_out <- att_gt(yname = "dep_var",
 es <- aggte(CS_out, type = "dynamic")
 
 # plot
-fig4a <- tibble(
+CS_ES <- tibble(
   t = es$egt,
   estimate = es$att.egt,
   se = es$se.egt,
@@ -977,7 +977,7 @@ AS_plot <- map_df(c(-5:-2, 0:5), get_lincom) %>%
   mutate(t = c(-5:-2, 0:5))
 
 #Plot the results
-fig4b <- AS_plot %>% 
+SA_ES <- AS_plot %>% 
   select(t, estimate, conf.low, conf.high) %>% 
   # add in data for year -1 (all zeros)
   bind_rows(tibble(t = -1, estimate = 0, 
@@ -1043,7 +1043,7 @@ getdata <- function(i) {
 stacked_data <- map_df(obs, getdata) %>% mutate(state_df = paste(state, df))
 
 # estimate the model on our stacked data
-fig4c <- stacked_data %>% 
+Stacked_ES <- stacked_data %>% 
   # fit the model
   do(broom::tidy(felm(formula_cldz2, data = ., exactDOF = TRUE, cmethod = "reghdfe"), 
                  conf.int = TRUE, se = "cluster")) %>% 
@@ -1080,6 +1080,6 @@ fig4c <- stacked_data %>%
         axis.title.y = element_text(angle = 360, hjust = 0.5, vjust = 0.5))
 
 # combine and save
-fig4 <- fig4a + fig4b + fig4c
-ggsave(fig4, filename = paste(dropbox, "fig4.png", sep = ""), dpi = 500,
+NEW_DID_SIMS <- CS_ES + SA_ES + Stacked_ES
+ggsave(NEW_DID_SIMS, filename = paste(dropbox, "NEW_DID_SIMS.png", sep = ""), dpi = 500,
        width = 10, height = 4)

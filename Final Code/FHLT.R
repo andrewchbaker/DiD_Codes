@@ -13,7 +13,7 @@ library(fixest)
 select <- dplyr::select
 theme_set(theme_clean() + theme(plot.background = element_blank()))
 # save out into dropbox folder
-dropbox <- ""
+dropbox <- "/Users/Andrew/Dropbox/Apps/Overleaf/bakerlarckerwang/Write_Up/"
 options(knitr.kable.NA = '')
 
 # set seed for CS bootstrap estimator to be replicable
@@ -61,7 +61,7 @@ mod4 <- feols(qw ~ post1 | year + code,
              cluster = "ccode", data = data)
 
 # show the with and without controls side by side
-table6 <- bind_rows(
+FHLT_table <- bind_rows(
   get_info(mod1, "Major Reform", "Controls", "post"),
   get_info(mod2, "First Reform", "Controls", "post1"),
   get_info(mod3, "Major Reform", "No Controls", "post"),
@@ -99,14 +99,14 @@ table6 <- bind_rows(
   # make and report table
   kable("latex", align = 'lcccc', booktabs = T,
         col.names = c("Variable", rep(c("Major Reform", "First Reform"), 2)),
-        label = "table6", 
+        label = "FHLT_table", 
         caption = "The Impact of Board Reforms on Firm Value") %>% 
   kable_styling(position = "center", latex_options = c("HOLD_position")) %>% 
   add_header_above(c(" " = 1, "With Covariates" = 2, "Without Covariates" = 2)) %>% 
   add_header_above(c(" " = 1, "Full Sample" = 4))
 
 # save
-write_lines(table6, path = paste(dropbox, "table6.tex", sep = ""))
+write_lines(FHLT_table, path = paste(dropbox, "FHLT_table.tex", sep = ""))
 
 # Event Study + Timing Graphs ---------------------------------------------
 enacts <- bind_rows(
@@ -127,7 +127,7 @@ enacts <- bind_rows(
                               levels = c("Major Reforms", "First Reforms")))
 
 # make the timing plot
-fig14a <- enacts %>% 
+FHLT_TIMING <- enacts %>% 
   mutate(post = if_else(post == 1, "Post", "Pre"),
          post = factor(post, levels = c("Pre", "Post"))) %>% 
   ggplot(aes(x = year, y = ccode)) + 
@@ -208,17 +208,17 @@ run_es <- function(reformtype, covtype, title, lastyear) {
 }
 
 # estimate the two event studies
-plot1 <- run_es(reform, "nocovs", "(A)", 2007)
-plot2 <- run_es(firstreform, "nocovs", "(B)", 2006) 
+FHLT_ES1 <- run_es(reform, "nocovs", "(A)", 2007)
+FHLT_ES2 <- run_es(firstreform, "nocovs", "(B)", 2006) 
 
 # combine the plots
-fig14b <- plot1 + plot2
+FHLT_ES <- FHLT_ES1 + FHLT_ES2
 
 # combine the timing plot and the event study plots and save
-fig14 <- fig14a + fig14b + plot_layout(nrow = 2, heights = c(1.5, 1))
+FHLT_TIMING_ES <- FHLT_TIMING + FHLT_ES + plot_layout(nrow = 2, heights = c(1.5, 1))
 
 # save
-ggsave(fig14, filename = paste(dropbox, "fig14.png", sep = ""), dpi = 500,
+ggsave(FHLT_TIMING_ES, filename = paste(dropbox, "FHLT_TIMING_ES.png", sep = ""), dpi = 500,
        width = 8, height = 8)
 
 # Remedies ----------------------------------------------------------------
@@ -273,7 +273,7 @@ text_pre <- bquote(widehat(delta^'Pre') ==.(pre_att)~"; "~p^'Pre'==.(pre_p))
 text_post <- bquote(widehat(delta^'Post') ==.(post_att)~"; "~p^'Post'==.(post_p))
 
 # plot
-fig15a <- tibble(
+FHLT_CS1 <- tibble(
   t = es1$egt,
   estimate = es1$att.egt,
   se = es1$se.egt,
@@ -337,7 +337,7 @@ text_pre <- bquote(widehat(delta^'Pre') ==.(pre_att)~"; "~p^'Pre'==.(pre_p))
 text_post <- bquote(widehat(delta^'Post') ==.(post_att)~"; "~p^'Post'==.(post_p))
 
 # plot
-fig15b <- tibble(
+FHLT_CS2 <- tibble(
   t = es2$egt,
   estimate = es2$att.egt,
   se = es2$se.egt,
@@ -478,7 +478,7 @@ stacked <- function(reformvar, lastyear, title) {
 stack1 <- stacked(reform, 2007, "(C)")
 
 # annotate plot with the F stat values
-fig15c <- stack1$plot + 
+FHLT_stack1 <- stack1$plot + 
   annotate("text", x = -2, y = -0.35, parse = F, label = stack1$text_pre, color = '#4B5F6C') +
   annotate("text", x = -2, y = -0.42, parse = F, label = stack1$text_post, color = '#A7473A')
 
@@ -486,12 +486,12 @@ fig15c <- stack1$plot +
 stack2 <- stacked(firstreform, 2006, "(D)")
 
 # annotate plot with the F stat values
-fig15d <- stack2$plot + 
+FHLT_stack2 <- stack2$plot + 
   annotate("text", x = 2.5, y = -0.3, parse = F, label = stack2$text_pre, color = '#4B5F6C') +
   annotate("text", x = 2.5, y = -0.38, parse = F, label = stack2$text_post, color = '#A7473A')
 
 # combine and save
-fig15 <- fig15a + fig15b + fig15c + fig15d + plot_layout(nrow = 2)
+FHLT_CS_STACK <- FHLT_CS1 + FHLT_CS2 + FHLT_stack1 + FHLT_stack2 + plot_layout(nrow = 2)
 
-ggsave(fig15, filename = paste(dropbox, "fig15.png", sep = ""), dpi = 800,
+ggsave(FHLT_CS_STACK, filename = paste(dropbox, "FHLT_CS_STACK.png", sep = ""), dpi = 800,
        width = 10, height = 20/3)

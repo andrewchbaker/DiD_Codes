@@ -112,45 +112,10 @@ plot1c <- data_dd %>%
 plot1 <- plot1a + plot1b + plot1c
 
 # save
-ggsave(plot1, filename = paste(dropbox, "plot1.png", sep = ""), dpi = 500,
+ggsave(plot1, filename = paste(dropbox, "DID_schema.png", sep = ""), dpi = 500,
        width = 10, height = 4)
 
-# Plot 2 - DID ---------------------------------------------------------
-# plot the DiD
-plot2 <- data %>% 
-  group_by(Unit) %>% 
-  mutate(Y2 = Y - Y[which(T == 0)]) %>% 
-  ggplot(aes(x = T, y = Y, group = Unit, color = Unit)) + 
-  geom_line(size = 2) + 
-  geom_line(aes(x = T, y = Y2, group = Unit, color = Unit), linetype = "dashed", size = 2) + 
-  labs(x = "Time", y = "Outcome") + 
-  scale_x_continuous(breaks = c(0, 1)) + 
-  scale_colour_brewer(palette = 'Set1') + 
-  theme(axis.title = element_text(size = 18),
-        axis.text = element_text(size = 16),
-        legend.position = 'bottom',
-        legend.title = element_blank(),
-        legend.text = element_text(size = 16),
-        plot.background = element_blank(),
-        axis.title.y = element_text(angle = 0, hjust = 0.5, vjust = 0.5),
-        axis.text.y = element_blank(),
-        axis.ticks.y = element_blank()) + 
-  annotate("label", y = 2, x = 0.85, label = "Treatment \n Effect") + 
-  annotate("segment", x = 1, xend = 1, y = 1, yend = 3, color = "black", size = 1) + 
-  annotate("segment", x = 0.92, xend = 1, y = 2, yend = 3, color = "black", 
-           linetype = "dashed", size = 2) + 
-  annotate("segment", x = 0.92, xend = 1, y = 2, yend = 1, color = "black", 
-           linetype = "dashed", size = 2) + 
-  annotate("segment", x = 0, xend = 0, y = 2, yend = 0, color = "#4B5F6C", 
-           arrow = arrow(length = unit(0.1, "inches")), size = 2) + 
-  annotate("segment", x = 0.5, xend = 0.5, y = 1.5, yend = 0.5, color = "#A7473A", 
-           arrow = arrow(length = unit(0.1, "inches")), size = 2)
-
-# save  
-ggsave(plot2, filename = paste(dropbox, "plot2.png", sep = ""), dpi = 500,
-       width = 10, height = 6)
-
-# Plot 3 - GB1 ---------------------------------------------------------
+# Plot - GB1 ---------------------------------------------------------
 # Goodman-bacon decomp, overall information
 data <- tibble(
   time = 0:100,
@@ -161,7 +126,7 @@ data <- tibble(
   pivot_longer(-time, names_to = "series", values_to = "value")
 
 # plot
-plot3 <- data %>% 
+GB1 <- data %>% 
   ggplot(aes(x = time, y = value, group = series, color = series, shape = series)) + 
   geom_line(size = 2) + geom_point(size = 2) +
   geom_vline(xintercept = c(34, 85)) +
@@ -197,10 +162,10 @@ plot3 <- data %>%
         axis.ticks.y = element_blank())
 
 # save  
-ggsave(plot3, filename = paste(dropbox, "plot3.png", sep = ""), dpi = 500,
+ggsave(GB1, filename = paste(dropbox, "GB_Full.png", sep = ""), dpi = 500,
        width = 10, height = 6)
 
-# Plot 4 - GB2 ---------------------------------------------------------
+# Plot - GB2 ---------------------------------------------------------
 
 # function to make subplots
 make_subplot <- function(omit, keep_dates, colors, breaks, break_expressions, series, 
@@ -272,8 +237,8 @@ p4 <- make_subplot(omit = "U", keep_dates = c(34, 100), colors = c('#A7473A', '#
                    title = bquote(paste('D. Late Group vs. Early Group, after ', 't'['k']^'*', sep = " ")))
 
 # combine plots
-plot4 <- p1 + p2 + p3 + p4 + plot_layout(nrow = 2)
+GB2 <- p1 + p2 + p3 + p4 + plot_layout(nrow = 2)
 
 # save
-ggsave(plot4, filename = paste(dropbox, "plot4.png", sep = ""), dpi = 500,
+ggsave(GB2, filename = paste(dropbox, "GB_subs.png", sep = ""), dpi = 500,
        width = 10, height = 6)
